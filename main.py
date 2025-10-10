@@ -5,11 +5,7 @@ from modules.finances_publiques import app as finances_publiques
 from modules.secteur_monetaire import app as secteur_monetaire
 from modules.secteur_exterieur import app as secteur_exterieur
 
-st.set_page_config(
-    page_title="Économie de Madagascar",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+st.set_page_config(page_title="Économie de Madagascar", layout="wide", initial_sidebar_state="expanded")
 
 MENU = {
     "🏠 Accueil": accueil,
@@ -21,6 +17,8 @@ MENU = {
 
 with st.sidebar:
     st.title("📌 Menu principal")
-    choix = st.radio("Navigation", list(MENU.keys()))
+    if "nav_choice" not in st.session_state:
+        st.session_state["nav_choice"] = "🏠 Accueil"
+    choix = st.radio("Navigation", list(MENU.keys()), key="nav_choice")
 
 MENU[choix]()
