@@ -1,12 +1,11 @@
-# accueil.py
 import streamlit as st
 from datetime import datetime
 
-# Helpers communs (compat utils/ ou racine)
+# Helpers communs (désormais dans utils/)
 try:
     from utils.common_ui import inject_css, floating_note
 except ImportError:
-    from utils.common_ui import inject_css, floating_note  # si placé en package
+    from common_ui import inject_css, floating_note  # fallback si exécuté à la racine
 
 st.set_page_config(page_title="Accueil", page_icon="🏠", layout="wide")
 
@@ -19,8 +18,8 @@ with st.sidebar:
     pal = st.selectbox(
         "Palette",
         ["clair", "creme", "ardoise-clair", "ardoise-sombre"],
-        index=["clair","creme","ardoise-clair","ardoise-sombre"].index(
-            st.session_state.get("palette","clair")
+        index=["clair", "creme", "ardoise-clair", "ardoise-sombre"].index(
+            st.session_state.get("palette", "clair")
         ),
     )
     st.session_state.palette = pal
@@ -31,7 +30,6 @@ with st.sidebar:
 # =========
 st.title("📚 Tableau de bord — Macroéconomie Madagascar")
 
-# Hero compact (on garde exactement tes messages)
 with st.container():
     st.write(
         "Bienvenue. Choisissez un module dans la barre latérale : "
@@ -46,12 +44,10 @@ st.divider()
 # Grille de modules
 # ===================
 st.subheader("Accéder aux modules")
-
-# Utilise st.page_link (Streamlit ≥ 1.31) pour naviguer vers tes pages existantes.
-# Les chemins doivent correspondre à ton pages.toml (ex. modules/secteur_*.py).
 c1, c2 = st.columns(2)
 
 with c1:
+    # Chemins conformes à votre pages.toml (modules/...)
     st.page_link("modules/secteur_reel.py", label="📈 Secteur réel", help="Données WB, INSTAT…")
     st.markdown("- **Traitement** : période, transformations (log, YoY, MoM)  \n"
                 "- **Visualisation** : lignes, barres, aires  \n"
@@ -75,12 +71,9 @@ with c2:
 
 st.divider()
 
-# ==================
-# Aide / Remarques
-# ==================
 with st.expander("ℹ️ Aide rapide"):
     st.markdown(
-        "- La **palette** se règle dans la barre latérale (les variables sont définies dans `styles.css`).\n"
+        "- La **palette** se règle dans la barre latérale (variables définies dans `styles.css`).\n"
         "- Chaque module propose **Traitement → Visualisation → Analyse → Prévisions** avec **téléchargements**.\n"
         "- Les **sources** restent celles de vos utilitaires (aucun changement côté collecte).\n"
         "- Prophet est **optionnel** : s’il n’est pas installé, l’option n’apparaît pas."
@@ -90,4 +83,3 @@ with st.expander("ℹ️ Aide rapide"):
 # Crédit bas
 # ============
 floating_note()
-
