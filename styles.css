@@ -1,1 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600&display=swap');
+
+:root{
+  /* Palettes de base (fond / sidebar / texte / accent) */
+  --bg-clair: #ffffff;
+  --sb-clair: #f6f6f6;
+  --fg-clair: #222222;
+  --accent-clair: #4b5563;
+
+  --bg-creme: #fffdf7;
+  --sb-creme: #fbf6ea;
+  --fg-creme: #2a2a2a;
+  --accent-creme: #7a5c3a;
+
+  --bg-ardoise-clair: #0f172a;
+  --sb-ardoise-clair: #111827;
+  --fg-ardoise-clair: #e5e7eb;
+  --accent-ardoise-clair: #93c5fd;
+
+  --bg-ardoise-sombre: #0b1220;
+  --sb-ardoise-sombre: #0f172a;
+  --fg-ardoise-sombre: #e2e8f0;
+  --accent-ardoise-sombre: #60a5fa;
+
+  /* Variables actives (écrasées par inject_css) */
+  --bg: var(--bg-clair);
+  --sb: var(--sb-clair);
+  --fg: var(--fg-clair);
+  --accent: var(--accent-clair);
+
+  --ui-font: "EB Garamond","Garamond","Times New Roman",serif;
+}
+
+html, body, .stApp, .block-container {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  font-family: var(--ui-font) !important;
+}
+
+[data-testid="stSidebar"]{
+  background: var(--sb) !important;
+  border-right: 1px solid rgba(0,0,0,.06);
+}
+
+/* Titres */
+h1,h2,h3{ color: var(--fg); letter-spacing:-.3px; }
+
+/* Boutons */
+.stButton>button{
+  background: transparent !important;
+  color: var(--fg) !important;
+  border:1.5px solid rgba(0,0,0,.15) !important;
+  border-radius:12px !important;
+  padding:10px 16px !important;
+  transition: .2s ease;
+  width: 100%;
+}
+.stButton>button:hover{
+  border-color: var(--accent) !important;
+  transform: translateY(-1px);
+}
+
+/* DataFrames */
+.stDataFrame{
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:12px;
+  overflow:hidden;
+}
+
+/* Footer flottant crédit */
+.floating-note{
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 1001;
+  background: rgba(255,255,255,.65);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 10px;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.floating-note img{ height:18px; width:18px; opacity:.85; filter:grayscale(100%); }
+.floating-note img:hover{ opacity:1; }
 
