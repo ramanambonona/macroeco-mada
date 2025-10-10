@@ -1,11 +1,6 @@
 import streamlit as st
 from datetime import datetime
-
-# Helpers communs (désormais dans utils/)
-try:
-    from utils.common_ui import inject_css, floating_note
-except ImportError:
-    from common_ui import inject_css, floating_note  # fallback si exécuté à la racine
+from utils.common_ui import inject_css, floating_note
 
 st.set_page_config(page_title="Accueil", page_icon="🏠", layout="wide")
 
@@ -76,4 +71,5 @@ st.divider()
 # Crédit bas
 # ============
 floating_note()
+
 
