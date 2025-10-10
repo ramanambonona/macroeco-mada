@@ -26,17 +26,14 @@ try:
 except Exception:
     PROPHET_OK = False
 
-
 # ---------- CSS ----------
 def inject_css(css_path: str = "styles.css", palette: str = "clair"):
     """Injecte le CSS et positionne la palette active via variables CSS."""
-    # Charge le CSS si présent
     try:
         with open(css_path, "r", encoding="utf-8") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     except Exception:
         pass
-    # Écrase les variables actives selon la palette demandée
     pal = palette.lower().replace("é","e")
     st.markdown(f"""
     <style>
@@ -48,7 +45,6 @@ def inject_css(css_path: str = "styles.css", palette: str = "clair"):
     }}
     </style>
     """, unsafe_allow_html=True)
-
 
 def floating_note():
     st.markdown("""
@@ -66,14 +62,12 @@ def floating_note():
     </div>
     """, unsafe_allow_html=True)
 
-
-# ---------- Download helpers ----------
+# ---------- Downloads ----------
 def _to_xlsx_bytes(df: pd.DataFrame) -> bytes:
     with BytesIO() as buf:
         with pd.ExcelWriter(buf, engine="xlsxwriter") as w:
             df.to_excel(w, index=False, sheet_name="data")
         return buf.getvalue()
-
 
 def download_box(df: pd.DataFrame, base_name: str, key_prefix: str = ""):
     c1, c2 = st.columns(2)
@@ -95,7 +89,6 @@ def download_box(df: pd.DataFrame, base_name: str, key_prefix: str = ""):
             use_container_width=True,
             key=f"{key_prefix}_xlsx",
         )
-
 
 # ---------- Analyse ----------
 def analyze_time_series(series: pd.Series):
@@ -122,126 +115,94 @@ def analyze_time_series(series: pd.Series):
         pass
     return out
 
-
-# ---------- Prévisions (petite boîte à outils) ----------
+# ---------- Prévisions ----------
 def forecast_ssae(series, periods):
     fc, cur = [], series.copy()
     for _ in range(periods):
-        m = cur.mean()
-        fc.append(m)
+        m = cur.mean(); fc.append(m)
         cur = pd.concat([cur[1:], pd.Series([m])])
     return np.array(fc)
 
-
 def forecast_ar(p, series, periods):
-    try:
-        return ARIMA(series, order=(p,0,0)).fit().forecast(steps=periods)
-    except Exception:
-        return np.zeros(periods)
-
+    try: return ARIMA(series, order=(p,0,0)).fit().forecast(steps=periods)
+    except Exception: return np.zeros(periods)
 
 def forecast_arima(order, series, periods):
-    try:
-        return ARIMA(series, order=order).fit().forecast(steps=periods)
-    except Exception:
-        return np.zeros(periods)
-
+    try: return ARIMA(series, order=order).fit().forecast(steps=periods)
+    except Exception: return np.zeros(periods)
 
 def forecast_var(lag, series_dict, target, periods):
     try:
         dfv = pd.DataFrame(series_dict)
-        if dfv.shape[1] < 2:
-            return forecast_ar(lag, series_dict[target], periods)
+        if dfv.shape[1] < 2: return forecast_ar(lag, series_dict[target], periods)
         model = VAR(dfv).fit(lag)
         fc = model.forecast(dfv.values[-lag:], steps=periods)
         return fc[:, dfv.columns.get_loc(target)]
     except Exception:
         return np.zeros(periods)
 
-
 def forecast_ardl(lags, series, periods=1):
-    try:
-        model = ARDL(series, lags=lags, order=0).fit()
-        return model.forecast(steps=periods)
-    except Exception:
-        return np.zeros(periods)
-
+    try: return ARDL(series, lags=lags, order=0).fit().forecast(steps=periods)
+    except Exception: return np.zeros(periods)
 
 def forecast_ets(series, periods, trend='add', seasonal='add', sp=12):
     try:
-        if seasonal and sp and len(series) < sp*2:
-            return np.zeros(periods)
+        if seasonal and sp and len(series) < sp*2: return np.zeros(periods)
         model = ExponentialSmoothing(series, trend=trend, seasonal=seasonal, seasonal_periods=sp).fit()
         return model.forecast(steps=periods)
     except Exception:
         return np.zeros(periods)
 
-
 def forecast_snaive(series, periods, sp=12):
-    if sp <= 0 or len(series) < sp:
-        return np.zeros(periods)
+    if sp <= 0 or len(series) < sp: return np.zeros(periods)
     last = series.iloc[-sp:].values
     reps = int(np.ceil(periods / sp))
     return np.resize(last, reps * sp)[:periods]
 
-
 def forecast_reg(series, periods):
     try:
-        X = np.arange(len(series)).reshape(-1,1)
-        y = series.values
+        X = np.arange(len(series)).reshape(-1,1); y = series.values
         m = LinearRegression().fit(X, y)
         return m.predict(np.arange(len(series), len(series)+periods).reshape(-1,1))
     except Exception:
         return np.zeros(periods)
 
-
 def forecast_rf(series, periods, n_estimators=120, max_depth=10):
     try:
         lags = min(12, max(1, len(series)//2))
-        if len(series) < lags + 10:
-            return np.zeros(periods)
+        if len(series) < lags + 10: return np.zeros(periods)
         X, y = [], []
         for i in range(lags, len(series)):
-            X.append(series.iloc[i-lags:i].values)
-            y.append(series.iloc[i])
+            X.append(series.iloc[i-lags:i].values); y.append(series.iloc[i])
         X, y = np.array(X), np.array(y)
         model = RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth, random_state=42).fit(X, y)
         fc, last = [], series.iloc[-lags:].values
         for _ in range(periods):
             pred = model.predict(last.reshape(1,-1))[0]
-            fc.append(pred)
-            last = np.roll(last, -1)
-            last[-1] = pred
+            fc.append(pred); last = np.roll(last, -1); last[-1] = pred
         return np.array(fc)
     except Exception:
         return np.zeros(periods)
 
-
 def forecast_mlp(series, periods, hidden=(100,), max_iter=300):
     try:
         lags = min(12, max(1, len(series)//2))
-        if len(series) < lags + 10:
-            return np.zeros(periods)
+        if len(series) < lags + 10: return np.zeros(periods)
         X, y = [], []
         for i in range(lags, len(series)):
-            X.append(series.iloc[i-lags:i].values)
-            y.append(series.iloc[i])
+            X.append(series.iloc[i-lags:i].values); y.append(series.iloc[i])
         X, y = np.array(X), np.array(y)
         model = MLPRegressor(hidden_layer_sizes=hidden, max_iter=max_iter, random_state=42).fit(X, y)
         fc, last = [], series.iloc[-lags:].values
         for _ in range(periods):
             pred = model.predict(last.reshape(1,-1))[0]
-            fc.append(pred)
-            last = np.roll(last, -1)
-            last[-1] = pred
+            fc.append(pred); last = np.roll(last, -1); last[-1] = pred
         return np.array(fc)
     except Exception:
         return np.zeros(periods)
 
-
 def forecast_prophet(df, col, periods, changepoint=0.05, seasonality=10.0):
-    if not PROPHET_OK:
-        return np.zeros(periods)
+    if not PROPHET_OK: return np.zeros(periods)
     try:
         pdf = df[["Date", col]].dropna().rename(columns={"Date":"ds", col:"y"})
         m = Prophet(
@@ -255,8 +216,7 @@ def forecast_prophet(df, col, periods, changepoint=0.05, seasonality=10.0):
     except Exception:
         return np.zeros(periods)
 
-
-def get_mape_status_html(mape):
+def get_mape_status_html(mape: float):
     if mape < 0.10:
         color, label = "#28a745", "🟢 Excellent"
     elif mape <= 0.20:
@@ -269,7 +229,6 @@ def get_mape_status_html(mape):
       <span style="background:{color}20;color:{color};padding:4px 8px;border-radius:6px;font-weight:600;font-size:.9em;">{label}</span>
     </div>"""
 
-
 # ---------- Rendu 4 onglets standard ----------
 def build_module(df: pd.DataFrame, module_title: str):
     """Rendu standard: Traitement / Visualisation / Analyse / Prévisions + téléchargements."""
@@ -277,25 +236,22 @@ def build_module(df: pd.DataFrame, module_title: str):
 
     tab1, tab2, tab3, tab4 = st.tabs(["Traitement", "Visualisation", "Analyse", "Prévisions"])
 
-    # ------------------ Onglet 1 : Traitement ------------------
+    # Onglet 1 : Traitement
     with tab1:
         st.subheader("Traitement (historique)")
-        st.caption("Les données proviennent de vos sources existantes (FMI, World Bank, INSTAT, BFM…).")
-
         if "Date" not in df.columns:
-            st.error("Colonne 'Date' manquante dans le DataFrame.")
+            st.error("Colonne 'Date' manquante.")
         else:
             df = df.copy()
             df["Date"] = pd.to_datetime(df["Date"])
             c1, c2, c3 = st.columns(3)
-            with c1:
-                dmin = st.date_input("Début", value=df["Date"].min().date())
-            with c2:
-                dmax = st.date_input("Fin", value=df["Date"].max().date())
-            with c3:
-                transform = st.selectbox("Transformation", ["Niveau","Log","YoY %","MoM %"], index=0)
+            with c1: dmin = st.date_input("Début", value=df["Date"].min().date() if not df.empty else None)
+            with c2: dmax = st.date_input("Fin", value=df["Date"].max().date() if not df.empty else None)
+            with c3: transform = st.selectbox("Transformation", ["Niveau","Log","YoY %","MoM %"], index=0)
 
-            dff = df[(df["Date"] >= pd.to_datetime(dmin)) & (df["Date"] <= pd.to_datetime(dmax))].copy()
+            dff = df
+            if dmin and dmax:
+                dff = df[(df["Date"] >= pd.to_datetime(dmin)) & (df["Date"] <= pd.to_datetime(dmax))].copy()
 
             if transform in ["YoY %", "MoM %"]:
                 for c in dff.columns.drop("Date"):
@@ -306,9 +262,9 @@ def build_module(df: pd.DataFrame, module_title: str):
                     dff[c] = np.log(pd.to_numeric(dff[c], errors="coerce").replace({0: np.nan}))
 
             st.dataframe(dff.head(30), use_container_width=True)
-            download_box(dff, f"{module_title.lower().replace(' ','_')}_traite")
+            download_box(dff, f"{module_title.lower().replace(' ','_')}_traite", key_prefix="trait")
 
-    # ------------------ Onglet 2 : Visualisation ------------------
+    # Onglet 2 : Visualisation
     with tab2:
         st.subheader("Visualisation")
         if "Date" not in df.columns:
@@ -324,11 +280,11 @@ def build_module(df: pd.DataFrame, module_title: str):
                 )
                 fig.update_layout(font_family="EB Garamond", hovermode="x unified")
                 st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
-                download_box(df[["Date"] + vars_sel], f"{module_title.lower().replace(' ','_')}_viz")
+                download_box(df[["Date"] + vars_sel], f"{module_title.lower().replace(' ','_')}_viz", key_prefix="viz")
             else:
                 st.info("Sélectionnez au moins une variable.")
 
-    # ------------------ Onglet 3 : Analyse ------------------
+    # Onglet 3 : Analyse
     with tab3:
         st.subheader("Analyse")
         if "Date" not in df.columns:
@@ -360,11 +316,11 @@ def build_module(df: pd.DataFrame, module_title: str):
                     fig.update_layout(height=600, hovermode="x unified", font_family="EB Garamond",
                                       title=f"Décomposition — {v}")
                     st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
-                    download_box(comp, f"{module_title.lower().replace(' ','_')}_decomposition_{v}")
+                    download_box(comp, f"{module_title.lower().replace(' ','_')}_decomposition_{v}", key_prefix="ana")
                 except Exception:
                     st.info("Décomposition non disponible.")
 
-    # ------------------ Onglet 4 : Prévisions ------------------
+    # Onglet 4 : Prévisions
     with tab4:
         st.subheader("Prévisions")
         if "Date" not in df.columns:
@@ -407,127 +363,106 @@ def build_module(df: pd.DataFrame, module_title: str):
             params['seasonal'] = st.selectbox("Saisonnalité (ETS)", ['add','mul', None], index=0 if model!="SNaive" else 2)
             params['sp'] = st.slider("Périodes saisonnières", 4, 24, 12)
 
-        dfc = df.copy()
-        dfc["Date"] = pd.to_datetime(dfc["Date"])
+        dfc = df.copy(); dfc["Date"] = pd.to_datetime(dfc["Date"])
         s = dfc.set_index("Date")[var].dropna()
 
         if st.button("Lancer la prévision", type="primary"):
             if len(s) < 2:
                 st.error("Série trop courte.")
+                return
+
+            # Forecast principal
+            if model == "NAIVE":
+                fc = forecast_ssae(s, periods)
+            elif model == "AR(p)":
+                fc = forecast_ar(params.get("p",1), s, periods)
+            elif model == "ARIMA":
+                fc = forecast_arima(params.get("order",(1,1,0)), s, periods)
+            elif model == "VAR":
+                others = [var] + [c for c in dfc.columns if c not in ["Date", var]][:1]
+                data = {v: dfc.set_index("Date")[v].dropna() for v in others}
+                fc = forecast_var(params.get("lag",1), data, var, periods)
+            elif model == "ARDL":
+                fc = forecast_ardl(params.get("lags",1), s, periods)
+            elif model == "Prophet" and PROPHET_OK:
+                fc = forecast_prophet(dfc, var, periods, params.get("changepoint",0.05), params.get("seasonality",10.0))
+            elif model == "Régression Linéaire":
+                fc = forecast_reg(s, periods)
+            elif model == "Random Forest":
+                fc = forecast_rf(s, periods, params.get("n_estimators",120), params.get("max_depth",10))
+            elif model == "MLP":
+                fc = forecast_mlp(s, periods, params.get("hidden",(100,)), params.get("max_iter",300))
+            elif model == "Exponential Smoothing (ETS)":
+                fc = forecast_ets(s, periods, params.get("trend","add"), params.get("seasonal","add"), params.get("sp",12))
+            elif model == "SNaive":
+                fc = forecast_snaive(s, periods, params.get("sp",12))
             else:
-                # --- Forecast principal
-                if model == "NAIVE":
-                    fc = forecast_ssae(s, periods)
-                elif model == "AR(p)":
-                    fc = forecast_ar(params.get("p",1), s, periods)
-                elif model == "ARIMA":
-                    fc = forecast_arima(params.get("order",(1,1,0)), s, periods)
-                elif model == "VAR":
-                    others = [var] + [c for c in dfc.columns if c not in ["Date", var]][:1]
-                    data = {v: dfc.set_index("Date")[v].dropna() for v in others}
-                    fc = forecast_var(params.get("lag",1), data, var, periods)
-                elif model == "ARDL":
-                    fc = forecast_ardl(params.get("lags",1), s, periods)
-                elif model == "Prophet" and PROPHET_OK:
-                    fc = forecast_prophet(dfc, var, periods, params.get("changepoint",0.05), params.get("seasonality",10.0))
-                elif model == "Régression Linéaire":
-                    fc = forecast_reg(s, periods)
-                elif model == "Random Forest":
-                    fc = forecast_rf(s, periods, params.get("n_estimators",120), params.get("max_depth",10))
-                elif model == "MLP":
-                    fc = forecast_mlp(s, periods, params.get("hidden",(100,)), params.get("max_iter",300))
-                elif model == "Exponential Smoothing (ETS)":
-                    fc = forecast_ets(s, periods, params.get("trend","add"), params.get("seasonal","add"), params.get("sp",12))
-                elif model == "SNaive":
-                    fc = forecast_snaive(s, periods, params.get("sp",12))
-                else:
-                    # Auto (min MAPE) — tournoi simple
-                    cand = [
-                        ("NAIVE", forecast_ssae(s, periods)),
-                        ("ARIMA", forecast_arima((1,1,0), s, periods)),
-                        ("ETS", forecast_ets(s, periods)),
-                        ("SNaive", forecast_snaive(s, periods)),
-                        ("Reg", forecast_reg(s, periods)),
-                    ]
-                    if PROPHET_OK:
-                        cand.append(("Prophet", forecast_prophet(dfc, var, periods)))
+                # Auto (min MAPE) — tournoi simple
+                cand = [
+                    ("NAIVE", forecast_ssae(s, periods)),
+                    ("ARIMA", forecast_arima((1,1,0), s, periods)),
+                    ("ETS", forecast_ets(s, periods)),
+                    ("SNaive", forecast_snaive(s, periods)),
+                    ("Reg", forecast_reg(s, periods)),
+                ]
+                if PROPHET_OK:
+                    cand.append(("Prophet", forecast_prophet(dfc, var, periods)))
 
-                    def mape_last(name):
-                        if len(s) <= 14:
-                            return np.inf
-                        tr, te = s[:-12], s[-12:]
-                        if name == "NAIVE":
-                            pr = forecast_ssae(tr, 12)
-                        elif name == "ARIMA":
-                            pr = forecast_arima((1,1,0), tr, 12)
-                        elif name == "ETS":
-                            pr = forecast_ets(tr, 12)
-                        elif name == "SNaive":
-                            pr = forecast_snaive(tr, 12)
-                        elif name == "Reg":
-                            pr = forecast_reg(tr, 12)
-                        elif name == "Prophet" and PROPHET_OK:
-                            trdf = pd.DataFrame({"Date": tr.index, var: tr.values})
-                            pr = forecast_prophet(trdf, var, 12)
-                        else:
-                            return np.inf
-                        return mean_absolute_percentage_error(te, pr) if len(pr) == len(te) else np.inf
-
-                    ranked = sorted([(mape_last(n), n, f) for (n, f) in cand], key=lambda x: x[0])
-                    model = f"Auto→{ranked[0][1]}"
-                    fc = ranked[0][2]
-
-                # Assemblage historique + prévision
-                future = pd.date_range(start=dfc["Date"].max() + pd.DateOffset(months=1), periods=periods, freq="M")
-                hist = pd.DataFrame({"Date": dfc["Date"], var: dfc[var], "Type": "Historique"})
-                fut  = pd.DataFrame({"Date": future, var: fc, "Type": "Prévision"})
-                full = pd.concat([hist, fut], ignore_index=True)
-
-                # Affichage
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(x=hist["Date"], y=hist[var], mode="lines", name="Historique"))
-                fig.add_trace(go.Scatter(
-                    x=pd.concat([hist.tail(1)["Date"], fut["Date"]]),
-                    y=pd.concat([hist.tail(1)[var], fut[var]]),
-                    mode="lines", name="Prévision"
-                ))
-                fig.update_layout(font_family="EB Garamond", hovermode="x unified",
-                                  title=f"{module_title} — {var} ({model})", height=520)
-                st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
-
-                # MAPE simple sur 12 derniers
-                if len(s) >= 12:
+                def mape_last(name):
+                    if len(s) <= 14: return np.inf
                     tr, te = s[:-12], s[-12:]
-                    if model == "NAIVE":
-                        pr = forecast_ssae(tr, 12)
-                    elif model == "AR(p)":
-                        pr = forecast_ar(params.get("p",1), tr, 12)
-                    elif model == "ARIMA":
-                        pr = forecast_arima(params.get("order",(1,1,0)), tr, 12)
-                    elif model == "VAR":
-                        pr = np.zeros(12)
-                    elif model == "ARDL":
-                        pr = forecast_ardl(params.get("lags",1), tr, 12)
-                    elif model == "Prophet" and PROPHET_OK:
+                    if name == "NAIVE":   pr = forecast_ssae(tr, 12)
+                    elif name == "ARIMA": pr = forecast_arima((1,1,0), tr, 12)
+                    elif name == "ETS":   pr = forecast_ets(tr, 12)
+                    elif name == "SNaive":pr = forecast_snaive(tr, 12)
+                    elif name == "Reg":   pr = forecast_reg(tr, 12)
+                    elif name == "Prophet" and PROPHET_OK:
                         trdf = pd.DataFrame({"Date": tr.index, var: tr.values})
-                        pr = forecast_prophet(trdf, var, 12, params.get("changepoint",0.05), params.get("seasonality",10.0))
-                    elif model == "Régression Linéaire":
-                        pr = forecast_reg(tr, 12)
-                    elif model == "Random Forest":
-                        pr = forecast_rf(tr, 12, params.get("n_estimators",120), params.get("max_depth",10))
-                    elif model == "MLP":
-                        pr = forecast_mlp(tr, 12, params.get("hidden",(100,)), params.get("max_iter",300))
-                    elif model == "Exponential Smoothing (ETS)":
-                        pr = forecast_ets(tr, 12, params.get("trend","add"), params.get("seasonal","add"), params.get("sp",12))
-                    elif model == "SNaive":
-                        pr = forecast_snaive(tr, 12, params.get("sp",12))
-                    else:
-                        pr = np.zeros(12)
+                        pr = forecast_prophet(trdf, var, 12)
+                    else: return np.inf
+                    return mean_absolute_percentage_error(te, pr) if len(pr) == len(te) else np.inf
 
-                    if len(pr) == len(te) and len(te) > 0:
-                        mape = mean_absolute_percentage_error(te, pr)
-                        st.markdown(get_mape_status_html(mape), unsafe_allow_html=True)
+                ranked = sorted([(mape_last(n), n, f) for (n, f) in cand], key=lambda x: x[0])
+                auto_label = ranked[0][1]
+                st.caption(f"Auto (min MAPE) → {auto_label}")
+                fc = ranked[0][2]
 
-                # Téléchargements
-                st.caption("Télécharger l’indicateur (Historique + Prévision)")
-                download_box(full[["Date", var, "Type"]], f"{module_title.lower().replace(' ','_')}_serie_{var}")
+            future = pd.date_range(start=dfc["Date"].max() + pd.DateOffset(months=1), periods=periods, freq="M")
+            hist = pd.DataFrame({"Date": dfc["Date"], var: dfc[var], "Type": "Historique"})
+            fut  = pd.DataFrame({"Date": future, var: fc, "Type": "Prévision"})
+            full = pd.concat([hist, fut], ignore_index=True)
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=hist["Date"], y=hist[var], mode="lines", name="Historique"))
+            fig.add_trace(go.Scatter(
+                x=pd.concat([hist.tail(1)["Date"], fut["Date"]]),
+                y=pd.concat([hist.tail(1)[var], fut[var]]),
+                mode="lines", name="Prévision"
+            ))
+            fig.update_layout(font_family="EB Garamond", hovermode="x unified",
+                              title=f"{module_title} — {var} ({model})", height=520)
+            st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+
+            # MAPE 12 derniers
+            if len(s) >= 12:
+                tr, te = s[:-12], s[-12:]
+                if model == "NAIVE":              pr = forecast_ssae(tr, 12)
+                elif model == "AR(p)":            pr = forecast_ar(params.get("p",1), tr, 12)
+                elif model == "ARIMA":            pr = forecast_arima(params.get("order",(1,1,0)), tr, 12)
+                elif model == "VAR":              pr = np.zeros(12)
+                elif model == "ARDL":             pr = forecast_ardl(params.get("lags",1), tr, 12)
+                elif model == "Prophet" and PROPHET_OK:
+                    trdf = pd.DataFrame({"Date": tr.index, var: tr.values})
+                    pr = forecast_prophet(trdf, var, 12, params.get("changepoint",0.05), params.get("seasonality",10.0))
+                elif model == "Régression Linéaire": pr = forecast_reg(tr, 12)
+                elif model == "Random Forest":       pr = forecast_rf(tr, 12, params.get("n_estimators",120), params.get("max_depth",10))
+                elif model == "MLP":                 pr = forecast_mlp(tr, 12, params.get("hidden",(100,)), params.get("max_iter",300))
+                elif model == "Exponential Smoothing (ETS)": pr = forecast_ets(tr, 12, params.get("trend","add"), params.get("seasonal","add"), params.get("sp",12))
+                elif model == "SNaive":              pr = forecast_snaive(tr, 12, params.get("sp",12))
+                else:                                 pr = np.zeros(12)
+
+                if len(pr) == len(te) and len(te) > 0:
+                    mape = mean_absolute_percentage_error(te, pr)
+                    st.markdown(get_mape_status_html(mape), unsafe_allow_html=True)
+
+            download_box(full[["Date", var, "Type"]], f"{module_title.lower().replace(' ','_')}_serie_{var}", key_prefix="prev")
