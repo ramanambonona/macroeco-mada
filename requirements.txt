@@ -9,6 +9,7 @@ xlrd>=2.0.1
 requests>=2.31
 requests-toolbelt>=1.0.0
 pandasdmx>=1.9.0
+sdmx1>=2.14.0
 beautifulsoup4>=4.12.3
 lxml>=4.9.3
 html5lib>=1.1
@@ -17,3 +18,4 @@ playwright>=1.47
 statsmodels>=0.14
 scipy>=1.10
 patsy>=0.5.6
+
