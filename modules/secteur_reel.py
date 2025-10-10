@@ -1,5 +1,3 @@
-# secteur_reel.py
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -8,7 +6,6 @@ from utils.excel_loader import load_excel
 from utils.forecast_tools import streamlit_forecast_interface
 from utils.extract_data_instat import extract_data_instat  
 
-# === Indicateurs de base (pour l'API Banque Mondiale) ===
 INDICATORS = {
     "PIB": "NY.GDP.MKTP.CD",
     "Consommation": "NE.CON.TOTL.CD",
@@ -25,12 +22,11 @@ def app():
 
     with onglet_data:
         source = st.radio("📦 Source des données", ["API Banque Mondiale", "Importer Excel", "INSTAT"])
-        df = None  # Initialiser le DataFrame
+        df = None
 
         if source == "Importer Excel":
             df = load_excel()
         elif source == "INSTAT":
-            # Appel à la fonction modifiée pour extraire de l'Excel INSTAT
             df = extract_data_instat()
         else:  # API Banque Mondiale
             dfs = []
@@ -44,11 +40,9 @@ def app():
             st.warning("⚠️ Aucune donnée disponible pour la source sélectionnée.")
             return
 
-        # Assurer que 'Année' est de type int
         if 'Année' in df.columns:
             df['Année'] = df['Année'].astype(int)
 
-        # === Calculs supplémentaires (conditionnels à la présence des colonnes) ===
         required_for_calculations = ["PIB", "Exportations", "Importations", "Investissement", "Dépenses publiques"]
         
         if all(col in df.columns for col in required_for_calculations):
@@ -57,7 +51,6 @@ def app():
             df["Dépenses/PIB (%)"] = df["Dépenses publiques"] / df["PIB"] * 100
             df["Exportations/PIB (%)"] = df["Exportations"] / df["PIB"] * 100
             
-            # Calcul des taux de croissance si non déjà présents (pour INSTAT, ils le sont partiellement)
             base_cols = ["PIB", "Consommation", "Investissement", "Dépenses publiques", "Exportations", "Importations"]
             for col in base_cols:
                 if col in df.columns and f"Croissance {col} (%)" not in df.columns:
@@ -68,7 +61,6 @@ def app():
 
         st.dataframe(df.set_index("Année"), use_container_width=True)
 
-        # Groupes dynamiques, incluant nouveaux indicateurs INSTAT
         groupes = {
             "Valeurs": [col for col in ["PIB", "Consommation", "Investissement", "Dépenses publiques", "Exportations", "Importations", "Secteur Primaire", "Secteur Secondaire", "Secteur Tertiaire"] if col in df.columns],
             "Ratios": [col for col in ["Investissement/PIB (%)", "Dépenses/PIB (%)", "Exportations/PIB (%)"] if col in df.columns],
@@ -99,4 +91,5 @@ def app():
             st.markdown("### 🔮 Prévision des variables choisies")
             streamlit_forecast_interface(df, selection, multivariate=len(selection) > 1)
         else:
+
             st.warning("Importez ou récupérez d'abord les données pour effectuer une prévision.")
