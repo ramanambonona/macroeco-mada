@@ -1,32 +1,16 @@
 import streamlit as st
 import pandas as pd
 
-# Helpers communs
 try:
     from utils.common_ui import inject_css, build_module, floating_note
 except ImportError:
     from common_ui import inject_css, build_module, floating_note
 
-# FMI SDMX
 try:
     from utils.imf_api import get_imf_data
 except ImportError:
     from imf_api import get_imf_data
 
-st.set_page_config(page_title="Finances publiques", page_icon="💰", layout="wide")
-
-# CSS + palette
-inject_css("styles.css", palette=st.session_state.get("palette", "clair"))
-with st.sidebar:
-    st.subheader("🎨 Apparence")
-    pal = st.selectbox(
-        "Palette", ["clair", "creme", "ardoise-clair", "ardoise-sombre"],
-        index=["clair", "creme", "ardoise-clair", "ardoise-sombre"].index(st.session_state.get("palette", "clair")),
-    )
-    st.session_state.palette = pal
-    inject_css("styles.css", palette=pal)
-
-# --- CHARGEMENT DONNÉES (FMI — vos codes) ---
 INDICATEURS_IMF = {
     "Recettes publiques (% PIB)": "G1_S13_POGDP_PT.A",
     "Dépenses publiques (% PIB)": "G2M_S13_POGDP_PT.A",
@@ -36,16 +20,15 @@ INDICATEURS_IMF = {
 }
 
 def _imf_to_df(label: str, code: str) -> pd.DataFrame:
-    df = get_imf_data(code, country_code="MDG", start_year=1991)
-    # attendu: colonnes ['Année','Valeur']
+    df = get_imf_data(code, country_code="MDG", start_year=1991)  # ['Année','Valeur']
     if df is None or df.empty or "Année" not in df.columns:
         return pd.DataFrame()
-    out = df[["Année", "Valeur"]].copy()
+    out = df[["Année","Valeur"]].copy()
     out[label] = pd.to_numeric(out["Valeur"], errors="coerce")
     out["Date"] = pd.to_datetime(out["Année"].astype(int).astype(str) + "-01-01")
     return out[["Date", label]]
 
-def load_data_fp() -> pd.DataFrame:
+def _load_data_fp() -> pd.DataFrame:
     frames = []
     for label, code in INDICATEURS_IMF.items():
         try:
@@ -61,10 +44,17 @@ def load_data_fp() -> pd.DataFrame:
         df = df.merge(t, on="Date", how="outer")
     return df.sort_values("Date")
 
-df = load_data_fp()
+def app():
+    inject_css("styles.css", palette=st.session_state.get("palette", "clair"))
+    with st.sidebar:
+        with st.expander("🎨 Apparence", expanded=False):
+            pal = st.selectbox(
+                "Palette", ["clair","creme","ardoise-clair","ardoise-sombre"],
+                index=["clair","creme","ardoise-clair","ardoise-sombre"].index(st.session_state.get("palette","clair")),
+            )
+            st.session_state.palette = pal
+            inject_css("styles.css", palette=pal)
 
-# Rendu standard
-build_module(df, "Finances publiques")
-
-# Note flottante
-floating_note()
+    df = _load_data_fp()
+    build_module(df, "Finances Publiques")
+    floating_note()
