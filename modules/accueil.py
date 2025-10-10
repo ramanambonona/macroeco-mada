@@ -29,7 +29,7 @@ def app():
         "Bienvenue. Utilisez le menu à gauche ou les raccourcis ci-dessous pour accéder aux modules : "
         "**Secteur réel**, **Finances publiques**, **Secteur monétaire**, **Secteur extérieur**."
     )
-    st.info("Sources : World Bank, INSTAT, FMI (SDMX), BFM (inchangées).")
+    st.info("Sources : World Bank, INSTAT, FMI, BFM.")
     st.caption(f"Dernière mise à jour de l’app : {datetime.now():%d/%m/%Y}")
 
     st.divider()
@@ -50,9 +50,8 @@ def app():
     st.divider()
     with st.expander("ℹ️ Aide rapide"):
         st.markdown(
-            "- La **palette** se règle dans la barre latérale (définie via `styles.css`).\n"
             "- Chaque module propose **Traitement → Visualisation → Analyse → Prévisions** avec **téléchargements**.\n"
-            "- Prophet est **optionnel** (désactivé automatiquement si non installé)."
         )
 
     floating_note()
+
