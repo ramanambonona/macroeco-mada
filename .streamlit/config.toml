@@ -1,6 +1,5 @@
-[theme]
-primaryColor="#111111"
-backgroundColor="#FFFFFF"
-secondaryBackgroundColor="#F5F5F7"
-textColor="#111111"
-font="serif"
+[server]
+headless = true
+maxUploadSize = 200
+[client]
+toolbarMode = "viewer"
