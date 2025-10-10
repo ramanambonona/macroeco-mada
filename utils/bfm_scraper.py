@@ -1,4 +1,3 @@
-# utils/bfm_scraper.py
 import streamlit as st
 import requests
 import pandas as pd
@@ -147,3 +146,4 @@ def get_reserves_obligatoires():
     except Exception as e:
         st.error(f"Erreur lors du scraping réserves obligatoires : {str(e)}")
         return pd.DataFrame()
+
