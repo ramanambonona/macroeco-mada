@@ -4,9 +4,9 @@ from datetime import datetime
 
 # Helpers communs (compat utils/ ou racine)
 try:
-    from common_ui import inject_css, floating_note
+    from utils.common_ui import inject_css, floating_note
 except ImportError:
-    from .common_ui import inject_css, floating_note  # si placé en package
+    from utils.common_ui import inject_css, floating_note  # si placé en package
 
 st.set_page_config(page_title="Accueil", page_icon="🏠", layout="wide")
 
@@ -90,3 +90,4 @@ with st.expander("ℹ️ Aide rapide"):
 # Crédit bas
 # ============
 floating_note()
+
