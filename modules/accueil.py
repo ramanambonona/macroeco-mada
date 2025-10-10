@@ -35,7 +35,7 @@ with st.container():
         "Bienvenue. Choisissez un module dans la barre latérale : "
         "**Secteur réel**, **Finances publiques**, **Secteur monétaire**, **Secteur extérieur**."
     )
-    st.info("Les sources de données restent celles de vos utilitaires : World Bank, INSTAT, FMI (SDMX), BFM…")
+    st.info("Les sources de données restent celles de vos utilitaires : World Bank, INSTAT, FMI, BFM…")
     st.caption(f"Dernière mise à jour de l’app : {datetime.now():%d/%m/%Y}")
 
 st.divider()
@@ -71,15 +71,9 @@ with c2:
 
 st.divider()
 
-with st.expander("ℹ️ Aide rapide"):
-    st.markdown(
-        "- La **palette** se règle dans la barre latérale (variables définies dans `styles.css`).\n"
-        "- Chaque module propose **Traitement → Visualisation → Analyse → Prévisions** avec **téléchargements**.\n"
-        "- Les **sources** restent celles de vos utilitaires (aucun changement côté collecte).\n"
-        "- Prophet est **optionnel** : s’il n’est pas installé, l’option n’apparaît pas."
-    )
 
 # ============
 # Crédit bas
 # ============
 floating_note()
+
