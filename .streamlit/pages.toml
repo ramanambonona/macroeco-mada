@@ -1,0 +1,30 @@
+### === PAGE D'ACCUEIL ===
+[[pages]]
+path = "pages/accueil.py"
+name = "Accueil"
+icon = "🏠"
+
+### === SECTEUR REEL ===
+
+[[pages]]
+path = "modules/secteur_reel.py"
+name = "Secteur réel"
+icon = "📈:"
+
+### === FINANCES PUBLIQUES ===
+[[pages]]
+path = "modules/finances_publiques.py"
+name = "Finances Publiques"
+icon = "💰"
+### === SECTEUR MONETAIRE ===
+[[pages]]
+path = "modules/secteur_monetaire.py"
+name = "Secteur Monétaire"
+icon = "💳"
+
+### === SECTEUR EXTERIEUR ===
+[[pages]]
+path = "modules/secteur_exterieur.py"
+name = "Secteur Extérieur"
+icon = "🌍"
+
