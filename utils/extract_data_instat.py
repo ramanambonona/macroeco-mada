@@ -4,7 +4,7 @@ import requests
 import io
 
 def extract_data_instat():
-    url = "https://www.instat.mg/documents/upload/main/ComptesNationauxRebases_2007_2021(Provisoires)_Nov2022.xlsx"
+    url = "https://www.instat.mg/documents/upload/main/ComptesNationauxRebases_2007_2024(Provisoires)_Nov2025.xlsx"
     
     try:
         response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
