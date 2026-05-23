@@ -113,7 +113,7 @@ def _build_from_worldbank():
 
 def _build_from_instat():
     st.subheader("📗 INSTAT (données historiques)")
-    st.caption("Chargement depuis votre fichier local défini dans `utils/extract_data_instat.py` (par défaut `data/instat.xlsx`).")
+    st.caption("Chargement des données INSTAT sources officielles : instat.mg")
     with st.spinner("Chargement INSTAT…"):
         df = instat_get()
     if not isinstance(df, pd.DataFrame) or df.empty:
